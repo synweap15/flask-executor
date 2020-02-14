@@ -95,3 +95,10 @@ def test_instance_proxy():
     assert 'TestProxy' in repr(x)
     assert 'Future' in repr(x)
 
+def test_futures_as_completed(default_app):
+    executor = Executor(default_app)
+    with default_app.test_request_context(''):
+        futures = {executor.submit(fib, x): x for x in range(30)}
+        for future in concurrent.futures.as_completed(futures):
+            x = futures[future]
+            assert future.result() == fib(x)
