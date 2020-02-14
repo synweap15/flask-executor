@@ -107,10 +107,11 @@ class Executor(InstanceProxy, concurrent.futures._base.Executor):
             raise ValueError("{} is not a valid executor type.".format(executor_type))
         return _executor(max_workers=executor_max_workers)
 
-    def _prepare_fn(self, fn, force_copy=False):
+    def _prepare_fn(self, fn, force_copy=False, skip_request_context=False):
         if isinstance(self._self, concurrent.futures.ThreadPoolExecutor) \
             or force_copy:
-            fn = copy_current_request_context(fn)
+            if not skip_request_context:
+                fn = copy_current_request_context(fn)
             fn = copy_current_app_context(fn)
         return fn
 
@@ -147,7 +148,7 @@ class Executor(InstanceProxy, concurrent.futures._base.Executor):
 
         :rtype: flask_executor.FutureProxy
         """
-        fn = self._prepare_fn(fn)
+        fn = self._prepare_fn(fn, skip_request_context=kwargs.get('skip_request_context', False))
         future = self._self.submit(fn, *args, **kwargs)
         for callback in self._default_done_callbacks:
             future.add_done_callback(callback)
@@ -221,7 +222,7 @@ class Executor(InstanceProxy, concurrent.futures._base.Executor):
                           executor's :meth:`~concurrent.futures.Executor.map`
                           method.
         """
-        fn = self._prepare_fn(fn)
+        fn = self._prepare_fn(fn, skip_request_context=kwargs.get('skip_request_context', False))
         return self._self.map(fn, *iterables, **kwargs)
 
     def job(self, fn):
