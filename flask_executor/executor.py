@@ -148,7 +148,8 @@ class Executor(InstanceProxy, concurrent.futures._base.Executor):
 
         :rtype: flask_executor.FutureProxy
         """
-        fn = self._prepare_fn(fn, skip_request_context=kwargs.get('skip_request_context', False))
+        skip_request_context = kwargs.pop('skip_request_context', False)
+        fn = self._prepare_fn(fn, skip_request_context=skip_request_context)
         future = self._self.submit(fn, *args, **kwargs)
         for callback in self._default_done_callbacks:
             future.add_done_callback(callback)
@@ -222,7 +223,8 @@ class Executor(InstanceProxy, concurrent.futures._base.Executor):
                           executor's :meth:`~concurrent.futures.Executor.map`
                           method.
         """
-        fn = self._prepare_fn(fn, skip_request_context=kwargs.get('skip_request_context', False))
+        skip_request_context = kwargs.pop('skip_request_context', False)
+        fn = self._prepare_fn(fn, skip_request_context=skip_request_context)
         return self._self.map(fn, *iterables, **kwargs)
 
     def job(self, fn):
